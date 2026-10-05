@@ -1,4 +1,4 @@
-# chessard-uci
+# chessard
 
 A UCI chess engine that plays like a human of a chosen rating. Instead of searching for the best
 move, it plays the move a person of that strength would most likely play, as predicted by the
@@ -22,7 +22,7 @@ rating plays it, which is what chessard ranks by.
 Linux, Python 3.12+, about 1 GB of disk space:
 
 ```bash
-git clone https://github.com/daniel-monroe/chessard-uci && cd chessard-uci
+git clone https://github.com/daniel-monroe/chessard && cd chessard
 ./setup.sh            # add --cpu to skip the ~2.5 GB CUDA build of PyTorch
 ./verify.sh           # talks UCI to the engine and checks a known result
 bin/chessard          # the engine: give this path to your GUI or lichess-bot
@@ -72,14 +72,14 @@ Give the GUI the absolute path to `bin/chessard`, since most GUIs don't expand `
   set `Elo`, `Player`, `Sampling` and so on in the engine options dialog.
 - **cutechess-cli / fastchess:**
   ```bash
-  cutechess-cli -engine cmd=/path/to/chessard-uci/bin/chessard name=chessard-2400 option.Elo=2400 \
+  cutechess-cli -engine cmd=/path/to/chessard/bin/chessard name=chessard-2400 option.Elo=2400 \
                 -engine cmd=stockfish option.UCI_LimitStrength=true option.UCI_Elo=2400 \
                 -each proto=uci tc=60+1 -games 2
   ```
 - **lichess-bot** (`config.yml`):
   ```yaml
   engine:
-    dir: "/path/to/chessard-uci/bin/"
+    dir: "/path/to/chessard/bin/"
     name: "chessard"
     protocol: "uci"
     uci_options:
