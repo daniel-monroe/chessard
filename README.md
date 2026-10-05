@@ -22,7 +22,7 @@ rating plays it, which is what chessard ranks by.
 Linux, Python 3.12+, about 1 GB of disk space:
 
 ```bash
-git clone <this repo> chessard-uci && cd chessard-uci
+git clone https://github.com/daniel-monroe/chessard-uci && cd chessard-uci
 ./setup.sh            # add --cpu to skip the ~2.5 GB CUDA build of PyTorch
 ./verify.sh           # talks UCI to the engine and checks a known result
 bin/chessard          # the engine: give this path to your GUI or lichess-bot
