@@ -4,19 +4,6 @@ A UCI chess engine that plays like a human of a chosen rating. Instead of search
 move, it plays the move a person of that strength would most likely play, as predicted by the
 **chessard** network.
 
-```
-position startpos moves e2e4 d7d5
-setoption name Elo value 2200
-go
-info depth 9 multipv 1 score cp 91 time 262 pv e4d5 string p=93.81%
-info depth 9 multipv 2 score cp -48 time 262 pv b1c3 string p=3.32%
-info depth 9 multipv 3 score cp -3 time 262 pv e4e5 string p=1.59%
-bestmove e4d5
-```
-
-`score` is Stockfish's evaluation of each move; `p=` is the probability that a human of the set
-rating plays it, which is what chessard ranks by.
-
 ## Quick start
 
 Linux, Python 3.12+, about 1 GB of disk space:
