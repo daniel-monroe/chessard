@@ -6,68 +6,83 @@ move, it plays the move a person of that strength would most likely play, as pre
 
 ## Quick start
 
-Linux, Python 3.12+, about 1 GB of disk space:
+Works on **Windows, macOS and Linux**. You need [Git](https://git-scm.com/downloads),
+[Python](https://www.python.org/downloads/) 3.10 or newer, and about 1 GB of disk space.
 
-```bash
-git clone https://github.com/daniel-monroe/chessard && cd chessard
-./setup.sh            # add --cpu to skip the ~2.5 GB CUDA build of PyTorch
-./verify.sh           # talks UCI to the engine and checks a known result
-bin/chessard          # the engine: give this path to your GUI or lichess-bot
+**Windows** (PowerShell or Command Prompt; when installing Python, tick "Add python.exe to PATH"):
+```bat
+git clone https://github.com/daniel-monroe/chessard
+cd chessard
+py install.py
+venv\Scripts\chessard.exe
 ```
 
-`setup.sh` installs everything inside the repo folder (all gitignored), and re-running it only
-redoes what is missing:
+**macOS / Linux:**
+```bash
+git clone https://github.com/daniel-monroe/chessard
+cd chessard
+python3 install.py
+venv/bin/chessard
+```
+
+`install.py` sets everything up inside the `chessard` folder, then runs `verify.py` to check
+that the engine works. It takes a minute or two. Re-running it only redoes what is missing.
 
 | Step | What it does | Ends up in |
 |---|---|---|
-| Python | finds Python 3.12+ (or installs one with `uv`) and creates a venv with the exact versions in `requirements.lock` plus a pinned PyTorch | `venv/` |
-| Stockfish | downloads the pinned official release (sf_18) for your CPU; builds it from source if the binary won't run (old glibc) | `stockfish/stockfish` |
-| Weights | `hf download danielgmonroe/chessard` (public, ~400 MB, no login), then checks it against `weights.sha256` | `weights/` |
-| Wrapper | a script that runs `uci.py` with the right Python, weights and Stockfish | `bin/chessard` |
+| Python | a virtualenv with the pinned versions in `requirements.txt`, plus PyTorch 2.14.1 (2.2.2 on Intel Macs, the last release for them) | `venv/` |
+| Engine command | `chessard` (`chessard.exe` on Windows), a normal program to give to any chess GUI | `venv/bin/` or `venv\Scripts\` |
+| Stockfish | the official Stockfish 18 release for your OS and CPU. On Linux, if no release runs (an old glibc, or ARM), it is built from source, which needs `make` and `g++` | `stockfish/` |
+| Weights | downloaded from [Hugging Face](https://huggingface.co/danielgmonroe/chessard) (public, ~400 MB, no login) and checked against `weights.sha256` | `weights/` |
 
-Options: `--cpu` / `--cuda` to choose the PyTorch build (default: CUDA if `nvidia-smi` works),
-`--prefix DIR` to install somewhere else, `--weights-src DIR` (or `CHESSARD_WEIGHTS_SRC`) to copy
-the weights from a local folder instead of downloading, `--python PATH`, and
-`--build-stockfish`. Run `./setup.sh --help` for the full list.
+Options:
+- `--cpu` / `--cuda`: choose the PyTorch build on Windows and Linux. The default is CUDA when an
+  NVIDIA GPU is found (`nvidia-smi` works); it's a ~2.5 GB download, against ~200 MB for CPU.
+  Macs always get the standard macOS build.
+- `--weights-src DIR`: copy the weights from a local folder instead of downloading them.
+- `--skip-verify`: don't run `verify.py` at the end.
 
-`verify.sh` checks that:
+`verify.py` checks that:
 - the UCI handshake lists all five players;
-- at Elo 2200 after 1.e4 d5 the first info line is `score cp 91 ... pv e4d5 string p=93.81%` and
-  the move is `bestmove e4d5` (deterministic on CPU and GPU);
+- at Elo 2200 after 1.e4 d5, the first info line is `score cp 91 ... pv e4d5 string p=93.81%`
+  and the move is `bestmove e4d5`;
 - `--player kaufman` loads at Elo 2188;
 - `--elo 1500` is rejected.
+
+Every push is tested this way on Windows, macOS and Linux (`.github/workflows/test.yml`).
 
 ### Running it
 
 ```bash
-bin/chessard                          # Elo 2200
-bin/chessard --elo 2400
-bin/chessard --player carlsen         # Carlsen's style, at his rating (2840)
+venv/bin/chessard                          # Elo 2200   (Windows: venv\Scripts\chessard.exe)
+venv/bin/chessard --elo 2400
+venv/bin/chessard --player carlsen         # Carlsen's style, at his rating (2840)
 ```
 
-`bin/chessard` accepts all of `uci.py`'s flags. To run `uci.py` yourself instead, point it at
-a weights folder with `--weights-dir` or `CHESSARD_DIR`, and at Stockfish with `--stockfish` or
-`STOCKFISH`. The weights folder can be shared between programs. The `Player` option lists every
-`<name>.pt` in its `loras/` subfolder, so an adapter you train yourself shows up once you copy
-it in; add it to `loras/players.json` to give it a default rating.
+The engine finds `weights/` and `stockfish/` in the repo on its own. To use other copies, pass
+`--weights-dir` / `--stockfish` or set `CHESSARD_DIR` / `STOCKFISH`. The weights folder can be
+shared between programs. The `Player` option lists every `<name>.pt` in its `loras/` subfolder,
+so an adapter you train yourself shows up once you copy it in; add it to `loras/players.json` to
+give it a default rating.
 
 ### GUIs and lichess-bot
 
-Give the GUI the absolute path to `bin/chessard`, since most GUIs don't expand `~`.
+Give the GUI the full path to the engine command: `C:\...\chessard\venv\Scripts\chessard.exe`
+on Windows, `/.../chessard/venv/bin/chessard` on macOS and Linux. `install.py` prints it at the end.
 
 - **Cute Chess, Arena, BanksiaGUI, En Croissant, Nibbler:** add a UCI engine with that path, then
   set `Elo`, `Player`, `Sampling` and so on in the engine options dialog.
 - **cutechess-cli / fastchess:**
   ```bash
-  cutechess-cli -engine cmd=/path/to/chessard/bin/chessard name=chessard-2400 option.Elo=2400 \
+  cutechess-cli -engine cmd=/path/to/chessard/venv/bin/chessard name=chessard-2400 option.Elo=2400 \
                 -engine cmd=stockfish option.UCI_LimitStrength=true option.UCI_Elo=2400 \
                 -each proto=uci tc=60+1 -games 2
   ```
 - **lichess-bot** (`config.yml`):
   ```yaml
   engine:
-    dir: "/path/to/chessard/bin/"
-    name: "chessard"
+    dir: "/path/to/chessard/venv/bin/"     # Windows: C:\path\to\chessard\venv\Scripts\
+    name: "chessard"                        # Windows: chessard.exe
     protocol: "uci"
     uci_options:
       Elo: 2400            # 2000-2900, or 0 for the player's own rating
@@ -102,36 +117,38 @@ cheaper. `go infinite` and `go ponder` hold `bestmove` until `stop` / `ponderhit
 
 ## Troubleshooting
 
-**`hf download` fails.** The weights repo is public, so this is usually the network (a proxy,
-a firewall, or an interrupted transfer). Re-run `./setup.sh` and the download resumes. Behind a
-proxy, set `HTTPS_PROXY`. You can also fetch the files some other way and pass
-`--weights-src DIR`.
+**`python`/`py` is not found (Windows).** Reinstall Python from python.org and tick "Add python.exe
+to PATH", or run it through the `py` launcher, which the installer adds.
 
-**`weights ... do not match weights.sha256`.** A download was corrupted. Delete `weights/` and
-re-run `./setup.sh`.
+**`could not create a virtualenv` (Debian/Ubuntu).** Run `sudo apt install python3-venv`.
 
-**`chessard needs Python 3.12 or newer`.** Install one (`apt install python3.12 python3.12-venv`,
-or `uv python install 3.12`) or pass `--python /path/to/python3.12`. If `python3 -m venv` says
-"ensurepip is not available", install `python3.12-venv`.
+**The weights download fails.** The repo is public, so this is usually the network (a proxy, a
+firewall, or an interrupted transfer). Re-run `install.py` and it resumes. Behind a proxy, set
+`HTTPS_PROXY`. You can also fetch the files another way and pass `--weights-src DIR`.
 
-**Every Stockfish release "does not run on this host".** This is normal on distributions with
-an older glibc (e.g. Ubuntu 20.04). The script then builds Stockfish from source, which needs
-`make` and `g++` (`apt install build-essential`) and internet access.
+**`the weights don't match weights.sha256`.** A download was corrupted. Delete `weights/` and
+re-run.
 
-**The GUI shows no moves, or `chessard failed to load`.** Run `bin/chessard` in a terminal and
-type `uci`, then `isready`; errors go to stderr. The usual causes are a wrong
-`WeightsDir`/`CHESSARD_DIR` (no `chessard.pt` there) or a wrong `StockfishPath`.
+**No Stockfish release runs, and the build needs `make`.** This happens on Linux with an old
+glibc, or on ARM. Install a compiler (`sudo apt install build-essential`) and re-run.
+
+**Intel Mac: "PyTorch only goes up to Python 3.12".** PyTorch's last Intel Mac release (2.2.2)
+supports Python 3.10–3.12, so run the installer with one of those (e.g. `python3.12 install.py`).
+
+**The GUI shows no moves, or `chessard failed to load`.** Run the engine command in a terminal
+and type `uci`, then `isready`; errors go to stderr. The usual causes are a wrong
+`WeightsDir`/`CHESSARD_DIR` or `StockfishPath`.
 
 **`--elo 1500` is rejected.** This is intentional, because the model was trained only on games by
 2000+ players. Through `setoption`, out-of-range values are clamped to 2000-2900.
 
-**It runs on CPU even though there's a GPU.** You have the CPU build of PyTorch (its version
-ends in `+cpu`). Run `./setup.sh --cuda` to swap it.
+**It runs on CPU even though there's an NVIDIA GPU.** You have the CPU build of PyTorch. Re-run
+`install.py --cuda` to swap it.
 
-**`verify.sh` fails only on the probability.** It allows ±0.05 points. A bigger difference means
+**`verify.py` fails only on the probability.** It allows ±0.05 points. A bigger difference means
 a different Stockfish version, `SF_Depth` or weights.
 
-**Starting over.** Delete `venv/ weights/ stockfish/ bin/` and run `./setup.sh` again.
+**Starting over.** Delete `venv/`, `weights/` and `stockfish/` and run `install.py` again.
 
 ## Python API
 
@@ -157,7 +174,7 @@ vector interpolated by Elo, and the policy head scores each legal move from the 
 from/to squares plus the Stockfish expected score of that move and of the best move.
 
 ```
-setup.sh, verify.sh    install from scratch / check an install (scripts/get-stockfish.sh)
+install.py, verify.py  set up from scratch on any OS / check an install
 uci.py                 UCI protocol, time handling, options
 chessard/inference.py  weights + LoRA loading, per-move Stockfish evals, predict()
 chessard/model.py      the network

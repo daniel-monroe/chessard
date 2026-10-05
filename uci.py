@@ -31,14 +31,18 @@ BASE = "chessard.pt"
 LORAS = "loras"
 DEFAULT_ELO = 2200
 MIN_ELO, MAX_ELO = 2000, 2900   # the model was trained on 2000+ games; below that it extrapolates
-DEFAULT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "weights")
+HERE = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_DIR = os.path.join(HERE, "weights")
+# install.py puts Stockfish here; otherwise fall back to one on PATH.
+_BUNDLED_SF = os.path.join(HERE, "stockfish", "stockfish.exe" if os.name == "nt" else "stockfish")
+DEFAULT_SF = _BUNDLED_SF if os.path.isfile(_BUNDLED_SF) else "stockfish"
 AUTHOR = "Daniel Monroe"
 MATE_CP = 100000
 
 # name -> (UCI type, default, min, max). Option names are matched case-insensitively.
 OPTIONS = {
     "WeightsDir": ("string", os.environ.get("CHESSARD_DIR", DEFAULT_DIR), None, None),
-    "StockfishPath": ("string", os.environ.get("STOCKFISH", "stockfish"), None, None),
+    "StockfishPath": ("string", os.environ.get("STOCKFISH", DEFAULT_SF), None, None),
     "Player": ("combo", "none", None, None),       # vars: the adapters found in WeightsDir
     "Elo": ("spin", 0, 0, MAX_ELO),               # 0 = the player's rating, else 2200
     "Temperature": ("spin", 100, 1, 500),          # percent; 100 = the model's own distribution
@@ -352,7 +356,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--weights-dir", help=f"folder with {BASE} and the player adapters "
                     "(default: $CHESSARD_DIR, else weights/ next to this script)")
-    ap.add_argument("--stockfish", help="Stockfish binary (default: $STOCKFISH or 'stockfish' on PATH)")
+    ap.add_argument("--stockfish", help="Stockfish binary (default: $STOCKFISH, else stockfish/ "
+                    "next to this script, else 'stockfish' on PATH)")
     ap.add_argument("--player", help="play in this player's style: an adapter loras/<name>.pt in the folder")
     ap.add_argument("--elo", type=int,
                     help=f"rating to imitate, {MIN_ELO}-{MAX_ELO} "

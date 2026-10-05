@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chessard"
+version = "1.0.0"
+description = "UCI chess engine that plays the move a human of a given rating would play"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-or-later" }
+authors = [{ name = "Daniel Monroe" }]
+# install.py installs torch first, from the index matching the machine (CPU / CUDA / macOS).
+dependencies = ["torch>=2.1", "chess>=1.10", "numpy>=1.24"]
+
+[project.urls]
+Homepage = "https://github.com/daniel-monroe/chessard"
+Weights = "https://huggingface.co/danielgmonroe/chessard"
+
+[project.scripts]
+chessard = "uci:main"
+
+[tool.setuptools]
+py-modules = ["uci"]
+packages = ["chessard"]

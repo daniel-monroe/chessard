@@ -1,9 +1,9 @@
-# installed by setup.sh; weights and engine binaries are not distributed with this repo
+# installed by install.py; weights and engine binaries are not distributed with this repo
 venv/
 .venv/
 weights/
 stockfish/
-bin/
+*.egg-info/
 *.pt
 *.pth
 __pycache__/
