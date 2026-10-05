@@ -1,0 +1,10 @@
+# installed by setup.sh; weights and engine binaries are not distributed with this repo
+venv/
+.venv/
+weights/
+stockfish/
+bin/
+*.pt
+*.pth
+__pycache__/
+*.pyc
