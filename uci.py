@@ -45,8 +45,8 @@ OPTIONS = {
     "StockfishPath": ("string", os.environ.get("STOCKFISH", DEFAULT_SF), None, None),
     "Player": ("combo", "none", None, None),       # vars: the adapters found in WeightsDir
     "Elo": ("spin", 0, 0, MAX_ELO),               # 0 = the player's rating, else 2200
-    "Temperature": ("spin", 100, 1, 500),          # percent; 100 = the model's own distribution
-    "Sampling": ("check", False, None, None),      # sample from the distribution vs. argmax
+    "Temperature": ("spin", 50, 1, 500),           # percent; 100 = the model's own distribution
+    "Sampling": ("check", True, None, None),       # sample from the distribution vs. argmax
     "SF_Depth": ("spin", 9, 1, 20),                # 9 is what the model was trained with
     "Threads": ("spin", min(8, os.cpu_count() or 1), 1, 256),  # parallel Stockfish processes
     "MultiPV": ("spin", 5, 1, 50),
@@ -363,8 +363,8 @@ def main() -> int:
                     help=f"rating to imitate, {MIN_ELO}-{MAX_ELO} "
                          f"(default: the player's own rating, else {DEFAULT_ELO})")
     ap.add_argument("--threads", type=int, help="parallel Stockfish processes")
-    ap.add_argument("--sampling", action="store_true",
-                    help="sample from the distribution instead of playing the most likely move")
+    ap.add_argument("--no-sampling", dest="sampling", action="store_false",
+                    help="always play the most likely move instead of sampling from the distribution")
     a = ap.parse_args()
     if a.elo is not None and a.elo != 0 and not MIN_ELO <= a.elo <= MAX_ELO:
         ap.error(f"--elo must be {MIN_ELO}-{MAX_ELO} (the model was trained on {MIN_ELO}+ games)")
@@ -374,8 +374,8 @@ def main() -> int:
                       ("player", "Player"), ("elo", "Elo"), ("threads", "Threads")):
         if getattr(a, flag) is not None:
             eng.opts[opt] = getattr(a, flag)
-    if a.sampling:
-        eng.opts["Sampling"] = True
+    if not a.sampling:
+        eng.opts["Sampling"] = False
     eng.opts["Player"] = eng.opts["Player"].lower()
     d = os.path.expanduser(eng.opts["WeightsDir"])
     if a.weights_dir and not os.path.isfile(os.path.join(d, BASE)):

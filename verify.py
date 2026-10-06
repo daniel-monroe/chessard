@@ -141,6 +141,8 @@ def main() -> int:
             show(e.out), show(e.err)
 
         e.send("setoption name Elo value 2200")
+        e.send("setoption name Temperature value 100")
+        e.send("setoption name Sampling value false")
         e.send("isready")
         if not e.expect(r"^readyok"):
             r.ok(False, "", "no readyok")

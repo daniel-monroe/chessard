@@ -87,7 +87,6 @@ on Windows, `/.../chessard/venv/bin/chessard` on macOS and Linux. `install.py` p
     uci_options:
       Elo: 2400            # 2000-2900, or 0 for the player's own rating
       Player: "none"       # or carlsen, nakamura, sadler, janik, kaufman
-      Sampling: true       # vary moves between games
   ```
 
 ## Options
@@ -96,8 +95,8 @@ on Windows, `/.../chessard/venv/bin/chessard` on macOS and Linux. `install.py` p
 |---|---|---|
 | `Elo` | 0 (auto) | rating to imitate, 2000–2900: the model was trained only on games by 2000+ players, and below that its behaviour is not meaningful. 0 means the selected player's own rating from `loras/players.json`, or 2200 with no player |
 | `Player` | none | play in one player's style using their adapter: carlsen (2840), nakamura (2810), sadler (2692), janik (2504), kaufman (2188) |
-| `Sampling` | false | sample a move from the distribution instead of always playing the most likely one; gives varied, more human games |
-| `Temperature` | 100 | percent; >100 flattens the distribution, <100 sharpens it |
+| `Sampling` | true | sample a move from the distribution instead of always playing the most likely one; gives varied, more human games. `--no-sampling` turns it off |
+| `Temperature` | 50 | percent; 100 is the network's own distribution, >100 flattens it, <100 sharpens it |
 | `MultiPV` | 5 | how many candidate moves to report |
 | `SF_Depth` | 9 | depth of the per-move Stockfish searches. The network was trained on depth 9; other depths work but shift its predictions |
 | `Threads` | min(8, cores) | Stockfish processes run in parallel |
@@ -165,21 +164,6 @@ net.close()
 
 Pass the real move sequence rather than a bare FEN. The network sees the last 8 positions, so
 predictions from a FEN with no history are worse.
-
-## The model
-
-A Leela Chess Zero BT4 transformer body (1024 wide, 15 layers, 32 heads) reimplemented in
-PyTorch, on Leela's 112-plane input with 8 steps of history. Playing strength enters as a learned
-vector interpolated by Elo, and the policy head scores each legal move from the embeddings of its
-from/to squares plus the Stockfish expected score of that move and of the best move.
-
-```
-install.py, verify.py  set up from scratch on any OS / check an install
-uci.py                 UCI protocol, time handling, options
-chessard/inference.py  weights + LoRA loading, per-move Stockfish evals, predict()
-chessard/model.py      the network
-chessard/encoder.py    game -> Leela 112 input planes
-```
 
 ## License
 
